@@ -1,0 +1,5 @@
+item,count,notes
+Complete trajectories,35,full episodes with autonomous and/or human phases
+Human intervention trajectories,35,intervention=True supervision retained for training
+Autonomous successes retained,5,archived for provenance; not used as human action labels
+Video views,2,episode-000 and episode-001 selected for showcase

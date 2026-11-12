@@ -1,0 +1,4 @@
+condition,baseline_success_rate,dagger_success_rate,episodes,notes
+Daylight,1.00,,5,reported daylight robustness result; new showcase slot pending
+Forward 3 cm,0.20,0.70,10,reported before/after comparison
+Lateral 6 cm,0.30,0.90,10,reported before/after comparison

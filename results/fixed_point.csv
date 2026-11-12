@@ -1,0 +1,7 @@
+model,setting,success,episodes,success_rate,notes
+ACT,fixed plush and basket positions,10,10,1.00,manual scoring
+Remote DP,fixed plush and basket positions,8,10,0.80,remote V4 DDIM20 BF16 compile
+pi0,fixed plush and basket positions,10,10,1.00,manual scoring
+pi0.5,fixed plush and basket positions,9,10,0.90,manual scoring
+pi0.5 RTC,fixed plush and basket positions,10,10,1.00,Training-Time RTC
+ALL,fixed plush and basket positions,47,50,0.94,technical stops excluded from task denominator
