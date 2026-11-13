@@ -8,6 +8,9 @@
 | `generalization.csv` | π0.5 Training-Time RTC + DAgger 前后两种位置变化的人工评分：前移 3 cm、侧移 6 cm，各 10 回合。 | 结果表公开；位置摆放记录和完整录像未公开。 |
 | `training_loss.csv` + `assets/figures/pi-training-curves.png` | π0 和 π0.5 每 200 步的训练 loss、梯度范数和学习率快照；没有 validation loss 记录。 | 训练曲线和数值快照公开；完整训练环境和 checkpoint 未公开。 |
 | `dagger_summary.csv` | DAgger 完整轨迹数、人工纠正轨迹数和逐帧 `intervention` 标记口径。 | 摘要公开；完整数据集未公开。 |
+| `rtc_runtime_comparison.csv` + `assets/figures/rtc-runtime-comparison.png` | 同一类被动真机时延探针下的预测年龄统计；各策略为独立短时运行。 | 描述性运行证据；严格 RTC 消融配对仍待补齐。 |
+| `rtc_latency_distribution.csv` + `assets/figures/rtc-latency-distribution.png` | 三次连续 π0.5 Training-Time RTC step-1000 运行的官方结果分布。 | 真实运行时延分布；不含任务成功率结论。 |
+| `rtc_action_trajectory.csv` + `assets/figures/rtc-action-trajectory.png` | 同一记录观测序列上的 20k 与 DAgger +1k 离线动作回放。 | 行为诊断；未向机械臂发送动作。 |
 
 ## 结果解释
 

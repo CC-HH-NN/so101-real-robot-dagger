@@ -1,0 +1,4 @@
+policy,metric,n,median,p95,max,source_scope
+π0,prediction_age_ms,29,397.080421,555.954266,652.954817,"same passive/live timing harness, separate short runs; descriptive only"
+Diffusion Policy,prediction_age_ms,59,292.646646,458.159876,547.789097,"same passive/live timing harness, separate short runs; descriptive only"
+π0.5 Training-Time RTC,prediction_age_ms,18,694.168925,844.818008,1075.208664,"same passive/live timing harness, separate short runs; descriptive only"
