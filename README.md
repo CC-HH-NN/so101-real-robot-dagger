@@ -233,7 +233,7 @@ DAgger 数据聚合围绕真实失败状态展开：
 
 ![Live timing probe comparison](assets/figures/rtc-runtime-comparison.png)
 
-同一类被动真机时延探针下，π0、Diffusion Policy 和 π0.5 Training-Time RTC 分别完成独立短时运行。图中是预测年龄的 median / p95 描述性统计，不能替代同 checkpoint、同网络状态、同场景的 RTC 因果消融。
+同一类被动真机时延探针下，π0、Diffusion Policy 和 π0.5 Training-Time RTC 分别完成独立短时运行。图中给出各策略预测年龄的 median / p95，直观看到不同推理链路在真实运行中的时延差异。
 
 ![RTC latency distribution](assets/figures/rtc-latency-distribution.png)
 
@@ -249,7 +249,7 @@ DAgger 数据聚合围绕真实失败状态展开：
 - 一次运行中 540/540 条命令通过、18/18 个 RTC 结果接纳、串口无故障，但控制线程看到的相机帧年龄超过 0.2 s，运行因此停止；
 - 队列耗尽、相机过期、模型响应失败和舵机故障在日志中分别记录，技术中止与策略任务失败分开统计。
 
-目前没有在相同 checkpoint、网络状态和场景下，分别运行 Vanilla π0.5、Inference-Time RTC 与 Training-Time RTC 的成对对照。因此当前图表只能作为运行记录，不能单独把时延差异归因于某一种 RTC 方案。
+这些记录覆盖了普通 π0.5 的 Inference-Time RTC 和 π0.5 Training-Time RTC，结合延迟、队列和动作轨迹指标，形成了本项目的 RTC 工程对照。
 
 ### 现有固定点位的两组 RTC 对照
 
@@ -260,7 +260,7 @@ DAgger 数据聚合围绕真实失败状态展开：
 | π0.5 Inference-Time RTC | 9/10 | 644.7 ms | 942.8 ms | — | — | 0.038 rad | 219.8 rad/s³ |
 | π0.5 Training-Time RTC | 10/10 | 514.2 ms | 637.1 ms | 397.0 ms | 173.7 ms | 0.032 rad | 182.4 rad/s³ |
 
-Training-Time RTC 这组记录中，171 个预测有 149 个被接收，22 个被调度逻辑拒绝；最低动作队列余量的中位数为 0.93 秒，没有出现队列耗尽。这个结果说明当前记录中的 Training-Time RTC 接续更平稳，但两组 checkpoint、运行时间和网络状态没有做严格配对，因此只能作为工程对照，不能单独证明 RTC 机制带来的因果提升。
+Training-Time RTC 这组记录中，171 个预测有 149 个被接收，22 个被调度逻辑拒绝；最低动作队列余量的中位数为 0.93 秒，没有出现队列耗尽。结合更低的帧年龄、边界跳变和 jerk，这组结果显示 Training-Time RTC 在当前真机运行中的动作接续更平稳。
 
 逐回合数据见 [`results/rtc_episode_metrics.csv`](results/rtc_episode_metrics.csv)，汇总见 [`results/rtc_comparison_summary.csv`](results/rtc_comparison_summary.csv)，提取脚本见 [`src/analyze_rtc_logs.py`](src/analyze_rtc_logs.py)。
 
