@@ -2,7 +2,7 @@
 
 一个面向真实 SO-101 机械臂的闭环工程项目。抓取—放置只是可重复的验证任务；项目重点是把观测、数据、训练、推理、执行、延迟诊断、人工纠正和结果分析接成一条可追溯链路。
 
-本仓库面向算法面试官和项目复盘读者，展示工程判断、实验设计和真实硬件证据。它不是从零复现实验的安装教程，也不上传模型权重、训练数据、完整原始录像、机器人标定或内部部署环境。
+这个仓库用来展示项目本身：真实机械臂如何被观测、训练、部署、诊断和改进。它不是从零复现实验的安装教程，也不上传模型权重、训练数据、完整原始录像、机器人标定或内部部署环境。
 
 ## 技术栈
 
@@ -43,6 +43,38 @@ python3 -m http.server 8000
 
 结果只支持这两种已测试的位置变化，不外推为任意物体或任意位置泛化。固定点位、泛化和 DAgger 的逐项口径见 [`results/`](results/)；原始真机运行记录留在私有工作区。
 
+位置变化的公开结果来自 **π0.5 Training-Time RTC + DAgger**。ACT 和远程 DP 只在固定点位协议下报告，不能把固定点位成功率当作它们的位置泛化结果。
+
+### 训练过程
+
+公开日志中保留了 π0 和 π0.5 的训练 loss 快照。两条曲线都来自每 200 步记录的训练日志；当前训练记录没有 validation loss，因此图中不补画验证曲线。
+
+![π0 and π0.5 training diagnostics](assets/figures/pi-training-curves.png)
+
+图中同时保留梯度范数和学习率，便于把 loss 变化放回训练过程解释。原始数值见 [`results/training_loss.csv`](results/training_loss.csv)。
+
+## Demo
+
+下面的动图直接嵌入 README，展示的是已经裁剪并统一处理过的 top-camera 预览；原始视频和完整录制仍保留在私有工作区。
+
+<table>
+<tr>
+<td><img src="assets/demo-gif/ACT-attempt-001-top.gif" alt="ACT fixed-position successful run" width="260"><br><b>ACT · fixed position</b></td>
+<td><img src="assets/demo-gif/dp-remote-attempt-001-top.gif" alt="Remote Diffusion Policy fixed-position successful run" width="260"><br><b>Remote DP · fixed position</b></td>
+<td><img src="assets/demo-gif/pi0-attempt-001-top.gif" alt="Pi zero fixed-position successful run" width="260"><br><b>π0 · fixed position</b></td>
+</tr>
+<tr>
+<td><img src="assets/demo-gif/pi0p5-attempt-003-top.gif" alt="Pi zero point five fixed-position successful run" width="260"><br><b>π0.5 · fixed position</b></td>
+<td><img src="assets/demo-gif/pi0p5_RTC-attempt-003-top.gif" alt="Pi zero point five RTC fixed-position successful run" width="260"><br><b>π0.5 RTC · fixed position</b></td>
+<td><img src="assets/demo-gif/forward3cm-attempt-006-top.gif" alt="Toy moved forward three centimeters" width="260"><br><b>Position · forward 3 cm</b></td>
+</tr>
+<tr>
+<td><img src="assets/demo-gif/lateral6cm-attempt-010-top.gif" alt="Toy moved laterally six centimeters" width="260"><br><b>Position · lateral 6 cm</b></td>
+<td><img src="assets/demo-gif/episode-000-top.gif" alt="DAgger episode showing autonomous and human intervention phases" width="260"><br><b>DAgger · episode 000</b></td>
+<td><img src="assets/demo-gif/episode-001-top.gif" alt="DAgger episode showing autonomous and human intervention phases" width="260"><br><b>DAgger · episode 001</b></td>
+</tr>
+</table>
+
 ## 我实际解决的问题
 
 项目按“观察真机 → 统一比较策略 → 拆解延迟 → 把失败变成 DAgger 数据 → 再训练 → 泛化复测”推进，完整过程见 [`docs/project-journey.md`](docs/project-journey.md)。
@@ -82,6 +114,7 @@ ACT / 远程 DP / π0 / π0.5 RTC
 - [`results/generalization.csv`](results/generalization.csv)：两种位置变化的前后对比；
 - [`results/dagger_summary.csv`](results/dagger_summary.csv)：完整轨迹和人工纠正口径；
 - [`results/provenance.md`](results/provenance.md)：结果来源、复现边界和内部运行记录映射。
+- [`docs/related-projects.md`](docs/related-projects.md)：公开 SO-101 项目的 README 组织方式调研。
 
 ## 复现边界
 
