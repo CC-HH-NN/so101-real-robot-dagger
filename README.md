@@ -17,34 +17,34 @@
 | 固定点位真机评测 | 47/50，94% | 五种策略，各 10 个已评分回合 |
 | 玩偶前移 3 cm | 20% → 70% | π0.5 Training-Time RTC + DAgger，各阶段 10 回合 |
 | 玩偶侧移 6 cm | 30% → 90% | π0.5 Training-Time RTC + DAgger，各阶段 10 回合 |
-| Training-Time RTC 延迟记录 | 626 个官方结果 | 三次连续 step-1000 真机运行 |
+| Training-Time RTC 运行时记录 | 626 条官方返回结果 | 三次连续 step-1000 真机短时运行 |
 | DAgger 轨迹 | 35 条完整 episode | 自主帧和人工帧均保留，逐帧记录 `intervention` |
 
-固定点位成绩说明任务在熟悉场景中的可执行性；位置变化结果说明真实失败状态上的数据迭代可以改善小范围空间变化。RTC 图表用于描述运行时延和动作行为，当前记录尚未形成 Vanilla π0.5、Inference-Time RTC 与 Training-Time RTC 的严格同条件因果消融。
+固定点位成绩说明任务在熟悉场景中的可执行性；位置变化结果说明真实失败状态上的数据迭代可以改善小范围空间变化。626 条结果指三次短时运行中官方服务返回并被记录的结果条目，不是 626 个完整任务，也不是 626 次成功。RTC 图表用于描述本次运行中的时延和动作行为；三种 π0.5 运行方式没有在同一 checkpoint、同一网络状态和同一场景下成对比较，因此图表不能单独证明 Training-Time RTC 带来了因果提升。
 
 ## 真机 Demo
 
-素材统一使用顶置相机、统一裁剪和相近播放速度。原始目录名与实际场景重新核对：`forward3cm-attempt-006` 对应侧移 6 cm，`lateral6cm-attempt-010` 对应前移 3 cm。
+素材统一使用顶置相机、统一裁剪和 1.5 倍速播放。位置变化视频按实际场景标注。
 
 <table>
 <tr>
-<td><img src="assets/demo-gif/ACT-attempt-001-top.gif" alt="ACT fixed-position successful run" width="260"><br><b>ACT · fixed position</b></td>
-<td><img src="assets/demo-gif/dp-remote-attempt-001-top.gif" alt="Diffusion Policy fixed-position successful run" width="260"><br><b>Diffusion Policy · fixed position</b></td>
-<td><img src="assets/demo-gif/pi0-attempt-001-top.gif" alt="Pi zero fixed-position successful run" width="260"><br><b>π0 · fixed position</b></td>
+<td><img src="assets/demo-gif/ACT-attempt-001-top.gif" alt="ACT 固定位置成功示范" width="260"><br><b>ACT · 固定位置</b></td>
+<td><img src="assets/demo-gif/dp-remote-attempt-001-top.gif" alt="Diffusion Policy 固定位置成功示范" width="260"><br><b>Diffusion Policy · 固定位置</b></td>
+<td><img src="assets/demo-gif/pi0-attempt-001-top.gif" alt="π0 固定位置成功示范" width="260"><br><b>π0 · 固定位置</b></td>
 </tr>
 <tr>
-<td><img src="assets/demo-gif/pi0p5-attempt-003-top.gif" alt="Pi zero point five fixed-position successful run" width="260"><br><b>π0.5 · fixed position</b></td>
-<td><img src="assets/demo-gif/pi0p5_RTC-attempt-003-top.gif" alt="Pi zero point five RTC fixed-position successful run" width="260"><br><b>π0.5 RTC · fixed position</b></td>
-<td><img src="assets/demo-gif/forward3cm-attempt-006-top.gif" alt="Toy moved laterally six centimeters" width="260"><br><b>π0.5 RTC + DAgger · lateral 6 cm</b></td>
+<td><img src="assets/demo-gif/pi0p5-attempt-003-top.gif" alt="π0.5 固定位置成功示范" width="260"><br><b>π0.5 · 固定位置</b></td>
+<td><img src="assets/demo-gif/pi0p5_RTC-attempt-003-top.gif" alt="π0.5 RTC 固定位置成功示范" width="260"><br><b>π0.5 RTC · 固定位置</b></td>
+<td><img src="assets/demo-gif/forward3cm-attempt-006-top.gif" alt="玩偶侧移六厘米成功示范" width="260"><br><b>π0.5 RTC + DAgger · 侧移 6 厘米</b></td>
 </tr>
 <tr>
-<td><img src="assets/demo-gif/lateral6cm-attempt-010-top.gif" alt="Toy moved forward three centimeters" width="260"><br><b>π0.5 RTC + DAgger · forward 3 cm</b></td>
-<td><img src="assets/demo-gif/episode-000-top.gif" alt="DAgger episode showing autonomous and human intervention phases" width="260"><br><b>DAgger · episode 000</b></td>
-<td><img src="assets/demo-gif/episode-001-top.gif" alt="DAgger episode showing autonomous and human intervention phases" width="260"><br><b>DAgger · episode 001</b></td>
+<td><img src="assets/demo-gif/lateral6cm-attempt-010-top.gif" alt="玩偶前移三厘米成功示范" width="260"><br><b>π0.5 RTC + DAgger · 前移 3 厘米</b></td>
+<td><img src="assets/demo-gif/episode-000-top.gif" alt="模型出错后人工纠正的 DAgger 完整轨迹" width="260"><br><b>DAgger · 模型出错后人工纠正</b></td>
+<td><img src="assets/demo-gif/episode-001-top.gif" alt="模型出错后人工纠正的 DAgger 完整轨迹" width="260"><br><b>DAgger · 模型出错后人工纠正</b></td>
 </tr>
 </table>
 
-两条 DAgger 轨迹从自主执行开始，经过人工接管，最后完成任务。完整视频和可控速播放页面见 [Demo 页面](docs/demo.html)。失败原因和技术中止统一放在后文的问题复盘中，避免把技术故障混入策略成功率。
+两条 DAgger 轨迹都从模型自主执行开始，模型出现偏移后由人工接管并完成剩余任务。
 
 ## 项目闭环
 
@@ -68,7 +68,7 @@
 
 项目中完成了采集、训练、部署和诊断链路的衔接：
 
-- 通过 ROS 2 虚拟机完成主从遥操作和初始双摄 episode 采集，并保留状态、动作和时间戳；
+- 通过 Ubuntu 虚拟机中的 ROS 2 完成主从遥操作和初始双摄 episode 采集，并保留状态、动作和时间戳；
 - 在同一任务上训练和部署五种 Policy；
 - 将本地 MPS 推理、远程 GPU 推理和官方 Training-Time RTC 接到同一类真机评分流程；
 - 通过完整 DAgger episode 追踪模型偏移、人工接管和后续完成动作；
@@ -78,10 +78,10 @@
 
 ```mermaid
 flowchart LR
-    A[SO-101 主臂\n遥操作] --> R[ROS 2 虚拟机\n话题/录制/初始采集]
+    A[SO-101 主臂\n遥操作] --> R[Ubuntu 虚拟机\nROS 2 话题/录制/初始采集]
     R --> C[LeRobot episode\n双摄+六维状态+动作]
     C --> D[H100\n训练与 checkpoint]
-    M[Mac mini\n相机/串口/评分/人工接管] --> E[本地 ACT / 远程 RPC\n观测上传与动作返回]
+    M[Mac mini\n相机/串口/评分/人工接管] --> E[本地 ACT / 远程服务\n观测上传与动作返回]
     E --> F[RTX 5090\nDP / π0 / π0.5 / RTC]
     E --> G[SO-101 从臂\n串口执行与反馈]
     G --> M
@@ -92,9 +92,9 @@ flowchart LR
 
 ### 链路分工
 
-- **ROS 2 虚拟机采集链路**：承担主从遥操作、双摄话题、录制和初始示范数据采集。它与 ROS 2 控制器和 LeRobot episode 格式衔接紧密，适合稳定生成结构化训练数据；这条路径参与了正式采集和接口验证。
+- **Ubuntu 虚拟机采集链路**：承担主从遥操作、双摄话题、录制和初始示范数据采集。它与 ROS 2 控制器和 LeRobot episode 格式衔接紧密，适合稳定生成结构化训练数据；这条路径参与了正式采集和接口验证。
 - **Mac 直接控制链路**：模型闭环需要更低的观测—动作延迟。虚拟机 USB/话题转发链路的额外时延会压缩动作接续余量，因此模型部署、DAgger 现场接管、回位、评分和延迟诊断改由 Mac mini 直接采集相机并持有从臂串口。这条路径也参与正式真机评测。
-- **模型服务链路**：ACT 使用 Mac mini 的 Apple MPS；Diffusion Policy、π0、π0.5 和 Training-Time RTC 使用 RTX 5090 远程服务。SSH 用于任务管理、端口转发和文件校验，实时观测与动作通过各自的 RPC 或官方 Zenoh 链路传输。
+- **模型服务链路**：ACT 使用 Mac mini 的 Apple MPS；Diffusion Policy、π0 和 π0.5 使用 RTX 5090 上的项目 gRPC/RPC 服务；π0.5 Training-Time RTC 使用官方 Zenoh remote inference 服务。SSH 用于任务管理、端口转发和文件校验。
 
 两条链路共同构成项目闭环：虚拟机解决示范采集和统一数据接口，Mac 解决低延迟执行和现场纠正。它们承担不同阶段，结果和日志按路径分别记录。
 
@@ -105,12 +105,12 @@ flowchart LR
 - **机器人**：一对 SO-101 主臂/从臂，六个关节加平行夹爪；主臂用于示范和人工接管，从臂负责执行；
 - **主机**：Apple Mac mini，M4 芯片，10 核 CPU，16 GB 内存，macOS 26.4；
 - **相机**：顶置 `2M WebCam` 和腕部 `2M` 两路 UVC RGB 相机，640×480，名义 30 FPS；
-- **通信**：主臂和从臂分别通过 USB 串口连接 Feetech 舵机总线；ROS 2 虚拟机承担采集话题，Mac 直接控制链路承担低延迟执行；状态和动作使用六维弧度表示；
+- **通信**：主臂和从臂分别通过 USB 串口连接 Feetech 舵机总线；Ubuntu 虚拟机中的 ROS 2 承担采集话题，Mac 直接控制链路承担低延迟执行；状态和动作使用六维弧度表示；
 - **本地软件**：Python 3.12.15、LeRobot 0.6.2、PyTorch 2.7.1、TorchVision 0.22.1、NumPy 2.2.6、PySerial 3.5。
 
 ### 训练与推理端
 
-- **H100**：用于 π0、π0.5 和 Training-Time RTC 的训练，保存 checkpoint、归一化统计、训练 loss、梯度范数和学习率记录；
+- **H100**：用于 π0、π0.5 和 Training-Time RTC 的训练，保存 checkpoint 和归一化统计；
 - **RTX 5090**：32 GB 显存，用于远程 Diffusion Policy、π0、π0.5 和 RTC 服务；
 - **远程环境**：Python 3.12.15、PyTorch 2.7.1+cu128、TorchVision 0.22.1+cu128、LeRobot 0.6.2、Eclipse Zenoh 1.10.1、Transformers 5.22.1、SentencePiece 0.2.2。
 
@@ -122,17 +122,20 @@ flowchart LR
 
 | 阶段 | 数量 | 说明 |
 | --- | ---: | --- |
-| 原始主从采集 | 120 episodes | 首轮人工审核和技术筛选的输入 |
-| 首轮清洗候选 | 108 episodes | 技术候选与人工成功标记共同形成 |
-| 正式基线训练 | 75 episodes | `train75` 模型配置使用的示范集合 |
-| DAgger 完整轨迹 | 35 episodes | 从起点记录到任务结束，30 FPS，共 19,719 帧 |
-| DAgger 有效训练窗口 | 18,004 windows | 每个窗口包含完整未来 50 步动作 |
+| 原始主从采集 | 120 条 | 原始示范输入 |
+| 首轮人工与技术筛选 | 108 条 | 95 条技术候选与 13 条人工确认成功轨迹取并集；12 条未标注成功的回合暂不使用 |
+| 状态/关节异常隔离后 | 95 条 | 从 108 条中隔离 13 条状态或关节语义异常回合，形成 V3 清洗集合 |
+| 混合候选集合 | 83 条 | 旧批次 50 条 + 补采批次 33 条；两批分别完成技术筛选后重新组建 |
+| 正式基线训练 | 75 条 | 旧批次 45 条 + 补采批次 30 条；用于 `train75` |
+| DAgger 完整轨迹 | 35 条 | 从起点记录到任务结束，30 FPS，共 19,719 帧 |
+
+正式基线的 75 条不是从 120 条按顺序逐条删除得到的单一子集，而是从两批已审核数据中按回合清单组建；另外 8 条（旧批次 5 条、补采批次 3 条）作为验证集保留。
 
 每个 episode 记录顶置视角、腕部视角、六维 `observation.state`、六维 `action`、时间戳和 episode/frame 索引。DAgger 数据额外保存 `intervention`、原始帧索引和来源时间戳。
 
 | 数据项 | 实际设置 |
 | --- | --- |
-| 采集方式 | 初始示范经 ROS 2 虚拟机主从遥操作采集；模型部署和 DAgger 纠正经 Mac 直接控制 |
+| 采集方式 | 初始示范经 Ubuntu 虚拟机中的 ROS 2 主从遥操作采集；模型部署和 DAgger 纠正经 Mac 直接控制 |
 | 视觉输入 | 顶置相机 + 腕部相机，640×480，名义 30 FPS |
 | 状态与动作 | 六维关节/夹爪弧度状态与动作目标 |
 | 远程执行频率 | π 系列与 Training-Time RTC 使用 20 Hz；采集时间轴保持 30 FPS |
@@ -145,23 +148,29 @@ flowchart LR
 
 固定点位训练可以稳定完成标准抓取—放置；玩偶移动后，策略会把动作拉回训练中常见的旧位置。这个现象构成后续位置泛化和 DAgger 数据迭代的实验起点。
 
+### 清洗依据
+
+数据清洗分为三层：
+
+1. **技术完整性**：检查四路 ROS 话题、消息数量、时间戳单调性、六维状态/动作、有限值和视频解码；时间轴存在内部缺口、图像损坏或无法解释的回合进入复核。
+2. **任务有效性**：人工确认玩偶是否从篮外开始、是否真正夹住、搬运过程中是否掉落、是否进入篮子并在松爪后保持稳定。只把任务成功且技术完整的回合放入成功示范候选。
+3. **训练一致性**：核对关节顺序、弧度单位、主从坐标映射、标定范围和图像—状态—动作的时间关系；状态/关节语义异常回合单独隔离，原始文件保留。
+
+首轮技术筛选使用 FiftyOne 与 `score_lerobot_episodes` 的 OpenCV 评分交叉整理：FiftyOne 通过、无 flags、无 outlier，且两路相机的 OpenCV aggregate 达到 0.70 以上，才进入技术候选。这个分数只用于发现损坏帧、停顿和时间轴异常，不能替代人工任务成功标签。
+
+筛选的目的，是避免把任务失败、损坏画面、时间错位或错误关节标签直接交给模仿学习训练，使模型学习到错误的观测—动作对应关系。首轮 120 条中，108 条进入清洗副本，12 条因缺少成功标记暂不使用；108 条中又隔离 13 条状态或关节语义异常回合，形成 95 条 V3 清洗集合。补采批次另有 40 条，其中 33 条通过技术候选筛选，7 条进入待审；这 33 条与旧批次 50 条共同形成 83 条混合候选，再按 75 条训练、8 条验证划分。每个数字对应独立清单，不能把不同批次的排除数简单相加。
+
 ## Policy 训练
 
 | Policy | 训练数据 | 步数 | Batch size | 学习率 | 初始化 | Seed | 训练/推理设备 |
 | --- | --- | ---: | ---: | ---: | --- | ---: | --- |
-| ACT | train75 | 50k | 32 | 1e-5 | 配置未指定预训练权重 | 1000 | H100 / Mac MPS |
-| Diffusion Policy | train75 | 50k | 64 | 1e-4 | 配置未指定预训练权重 | 1000 | H100 / RTX 5090 |
+| ACT | train75 | 50k | 32 | 1e-5 | - | 1000 | H100 / Mac MPS |
+| Diffusion Policy | train75 | 50k | 64 | 1e-4 | - | 1000 | H100 / RTX 5090 |
 | π0 | train75 | 20k | 32 | 2.5e-5 | `pi0_base` | 1000 | H100 / RTX 5090 |
 | π0.5 | train75 | 20k | 64 | 2.5e-5 | `pi05_base` | 1000 | H100 / RTX 5090 |
 | π0.5 Training-Time RTC | train75 | 20k | 64 | 2.5e-5 | `pi05_base` | 1000 | H100 / RTX 5090 |
 
-π0、π0.5 和 Training-Time RTC 使用 50 步动作块。checkpoint 配置中的 `num_inference_steps` 为 10，真机远程服务合同将 π 系列的运行采样步数设为 5；Training-Time RTC 的训练合同最大 delay 为 20。ACT、Diffusion Policy、π0 和 π0.5 的公开配置保留步数、batch size、学习率、初始化和 seed 等影响结果解释的参数。
-
-π0 和 π0.5 使用预训练策略在 SO-101 数据上微调；ACT 与 Diffusion Policy 的初始化记录未包含可公开核对的预训练权重名，因此表格保留配置事实，不补写未确认的名称。
-
-训练记录包含 π0 和 π0.5 的 training loss、gradient norm 和 learning rate，没有 validation loss。图中只展示实际记录的训练曲线，数值见 [`results/training_loss.csv`](results/training_loss.csv)。
-
-![π0 and π0.5 training diagnostics](assets/figures/pi-training-curves.png)
+π0、π0.5 和 Training-Time RTC 预测 50 步动作块。训练配置中的 `num_inference_steps` 为 10，真机远程服务的运行采样为 5 步；Training-Time RTC 使用 20 Hz、`execution_horizon=25`，允许的最大接续延迟为 20 步。
 
 ## 真机评测
 
@@ -171,11 +180,10 @@ flowchart LR
 - **评分**：人工在每轮结束后记录任务成功或失败；
 - **固定点位**：玩偶和篮子位置保持不变，用于比较不同 Policy 的基础执行能力；
 - **位置泛化**：篮子、相机和起点保持不变，只移动玩偶；
-- **技术中止**：相机过期、服务响应失败、队列耗尽、串口或舵机故障单独记录，不直接并入策略失败分母。
 
 ### 固定点位
 
-玩偶和篮子保持固定位置，每种策略完成 10 个已评分回合。技术中止、相机时效和硬件通信问题单独记录，成功率分母为完成任务评分的回合。
+玩偶和篮子保持固定位置，每种策略完成 10 个已评分回合。
 
 | Policy | 成功 | 回合 | 成功率 |
 | --- | ---: | ---: | ---: |
@@ -195,7 +203,7 @@ flowchart LR
 | 玩偶前移 3 cm | 20% | 70% | 10 |
 | 玩偶侧移 6 cm | 30% | 90% | 10 |
 
-结果支持小范围位置变化下的改进，结论范围止于已测玩偶、位移和场景条件。ACT、Diffusion Policy、π0 和 π0.5 的公开结果限于固定点位协议。
+结果支持小范围位置变化下的改进，结论范围止于已测玩偶、位移和场景条件。ACT、Diffusion Policy 和 π0 的位置泛化表现较弱，因此没有继续开展对应的独立位置变化评测；它们的公开结果限于固定点位协议。
 
 ## DAgger：从失败状态回收训练信号
 
@@ -230,7 +238,7 @@ DAgger 数据聚合围绕真实失败状态展开：
 
 ## RTC 与端到端延迟
 
-π0.5 Training-Time RTC 使用训练期时序约束：20 Hz、50 步动作块、`execution_horizon=25`，训练合同中的 `training_max_delay=20`。运行中另记录相机采集、JPEG 编码、网络往返、服务排队、模型计算、动作返回、动作接纳和机械臂反馈。
+π0.5 Training-Time RTC 使用 20 Hz、50 步动作块和 `execution_horizon=25`，允许的最大接续延迟为 20 步。
 
 ### 三类公开证据
 
@@ -248,11 +256,11 @@ DAgger 数据聚合围绕真实失败状态展开：
 
 ### 已定位的运行现象
 
-- 一次预检测往返约 1.07 s，按 20 Hz 需要约 22 步接续，超过训练允许的 20 步；官方拒绝该接续后，旧动作块播放完，队列耗尽；
+- 一次预检测往返约 1.07 s，按 20 Hz 需要约 22 步接续，超过 20 步上限；官方拒绝该接续后，旧动作块播放完，队列耗尽；
 - 一次运行中 540/540 条命令通过、18/18 个 RTC 结果接纳、串口无故障，但控制线程看到的相机帧年龄超过 0.2 s，运行因此停止；
 - 队列耗尽、相机过期、模型响应失败和舵机故障在日志中分别记录，技术中止与策略任务失败分开统计。
 
-Vanilla π0.5、Inference-Time RTC 与 Training-Time RTC 的严格同条件延迟消融仍缺少配对记录。当前图表保留为探针统计、真实运行分布和离线动作回放，不把它们写成因果提升。
+目前没有在相同 checkpoint、网络状态和场景下，分别运行 Vanilla π0.5、Inference-Time RTC 与 Training-Time RTC 的成对对照。因此当前图表只能作为运行记录，不能单独把时延差异归因于某一种 RTC 方案。
 
 ## 工程问题与处理
 
@@ -266,7 +274,7 @@ Vanilla π0.5、Inference-Time RTC 与 Training-Time RTC 的严格同条件延�
 
 ### RTC 接续和动作队列
 
-训练时 RTC 会根据动作块重叠和可接受 delay 判断新预测能否接入。一次预检测往返约 1.07 s，20 Hz 下需要约 22 步接续，超过训练合同的 20 步；官方拒绝接续后，旧动作块播放完，队列进入耗尽状态。运行时因此需要同时记录请求往返、接续步数、队列余量和等待状态。
+训练时 RTC 会根据动作块重叠和可接受 delay 判断新预测能否接入。一次预检测往返约 1.07 s，20 Hz 下需要约 22 步接续，超过 20 步上限；官方拒绝接续后，旧动作块播放完，队列进入耗尽状态。运行时因此需要同时记录请求往返、接续步数、队列余量和等待状态。
 
 ### 相机帧时效和端到端延迟
 
@@ -295,11 +303,10 @@ Vanilla π0.5、Inference-Time RTC 与 Training-Time RTC 的严格同条件延�
 | `results/fixed_point.csv` | 五种策略的固定点位逐模型汇总 |
 | `results/generalization.csv` | 前移 3 cm、侧移 6 cm 的 DAgger 前后结果 |
 | `results/dagger_summary.csv` | 完整轨迹、人工纠正轨迹和 `intervention` 口径 |
-| `results/training_loss.csv` | π0/π0.5 training loss、梯度范数和学习率快照 |
 | `results/rtc_runtime_comparison.csv` | 同类时延探针下的预测年龄统计与证据范围 |
 | `results/rtc_latency_distribution.csv` | π0.5 Training-Time RTC 的真实往返、源帧年龄和队列余量 |
 | `results/rtc_action_trajectory.csv` | 同观测离线回放的关节动作轨迹 |
-| `assets/figures/` | 训练、RTC 时延和动作轨迹图 |
+| `assets/figures/` | RTC 时延和动作轨迹图 |
 | `assets/demo-gif/` | 9 条统一处理的顶置相机 GIF |
 | `src/` | DAgger 控制、纠正窗口准备、官方 RTC 接入和公开图表脚本 |
 
