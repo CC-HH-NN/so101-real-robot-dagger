@@ -251,6 +251,19 @@ DAgger 数据聚合围绕真实失败状态展开：
 
 目前没有在相同 checkpoint、网络状态和场景下，分别运行 Vanilla π0.5、Inference-Time RTC 与 Training-Time RTC 的成对对照。因此当前图表只能作为运行记录，不能单独把时延差异归因于某一种 RTC 方案。
 
+### 现有固定点位的两组 RTC 对照
+
+为了进一步量化动作接续，我们从两组各 10 回合的固定点位真机记录中提取了逐回合指标：普通 π0.5 使用 Inference-Time RTC，另一组使用 Training-Time RTC。
+
+| 条件 | 成功率 | 预测/源帧年龄 median | 预测/源帧年龄 P95 | 请求往返 median | 服务端计算 median | 动作块边界跳变 P95 | jerk P95 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| π0.5 Inference-Time RTC | 9/10 | 644.7 ms | 942.8 ms | — | — | 0.038 rad | 219.8 rad/s³ |
+| π0.5 Training-Time RTC | 10/10 | 514.2 ms | 637.1 ms | 397.0 ms | 173.7 ms | 0.032 rad | 182.4 rad/s³ |
+
+Training-Time RTC 这组记录中，171 个预测有 149 个被接收，22 个被调度逻辑拒绝；最低动作队列余量的中位数为 0.93 秒，没有出现队列耗尽。这个结果说明当前记录中的 Training-Time RTC 接续更平稳，但两组 checkpoint、运行时间和网络状态没有做严格配对，因此只能作为工程对照，不能单独证明 RTC 机制带来的因果提升。
+
+逐回合数据见 [`results/rtc_episode_metrics.csv`](results/rtc_episode_metrics.csv)，汇总见 [`results/rtc_comparison_summary.csv`](results/rtc_comparison_summary.csv)，提取脚本见 [`src/analyze_rtc_logs.py`](src/analyze_rtc_logs.py)。
+
 ## 工程问题与处理
 
 ### 固定点位过拟合
