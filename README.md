@@ -79,7 +79,7 @@
 flowchart LR
     A[SO-101 主臂\n遥操作] --> R[Ubuntu 虚拟机\nROS 2 话题/录制/初始采集]
     R --> C[LeRobot episode\n双摄+六维状态+动作]
-    C --> D[H100\n训练与 checkpoint]
+    C --> D[A100 / H100\n训练与 checkpoint]
     M[Mac mini\n相机/串口/评分/人工接管] --> E[本地 ACT / 远程服务\n观测上传与动作返回]
     E --> F[RTX 5090\nDP / π0 / π0.5 / RTC]
     E --> G[SO-101 从臂\n串口执行与反馈]
@@ -101,7 +101,7 @@ flowchart LR
 
 ### 真机端
 
-- **机器人**：一对 SO-101 主臂/从臂，六个关节加平行夹爪；主臂用于示范和人工接管，从臂负责执行；
+- **机器人**：一对 SO-101 主臂/从臂，共 6 个执行通道（5 个机械臂关节 + 1 个夹爪自由度）；主臂用于示范和人工接管，从臂负责执行；
 - **主机**：Apple Mac mini，M4 芯片，10 核 CPU，16 GB 内存，macOS 26.4；
 - **相机**：顶置 `2M WebCam` 和腕部 `2M` 两路 UVC RGB 相机，640×480，名义 30 FPS；
 - **通信**：主臂和从臂分别通过 USB 串口连接 Feetech 舵机总线；Ubuntu 虚拟机中的 ROS 2 承担采集话题，Mac 直接控制链路承担低延迟执行；状态和动作使用六维弧度表示；
@@ -109,7 +109,8 @@ flowchart LR
 
 ### 训练与推理端
 
-- **H100**：用于 π0、π0.5 和 Training-Time RTC 的训练，保存 checkpoint 和归一化统计；
+- **A100 40 GB**：用于 ACT 和 Diffusion Policy 训练；
+- **H100 80 GB**：用于 π0、π0.5 和 Training-Time RTC 训练，保存 checkpoint 和归一化统计；
 - **RTX 5090**：32 GB 显存，用于远程 Diffusion Policy、π0、π0.5 和 RTC 服务；
 - **远程环境**：Python 3.12.15、PyTorch 2.7.1+cu128、TorchVision 0.22.1+cu128、LeRobot 0.6.2、Eclipse Zenoh 1.10.1、Transformers 5.22.1、SentencePiece 0.2.2。
 
@@ -153,8 +154,8 @@ flowchart LR
 
 | Policy | 训练数据 | 步数 | Batch size | 学习率 | 初始化 | Seed | 训练/推理设备 |
 | --- | --- | ---: | ---: | ---: | --- | ---: | --- |
-| ACT | train75 | 50k | 32 | 1e-5 | - | 1000 | H100 / Mac MPS |
-| Diffusion Policy | train75 | 50k | 64 | 1e-4 | - | 1000 | H100 / RTX 5090 |
+| ACT | train75 | 50k | 32 | 1e-5 | - | 1000 | A100 / Mac MPS |
+| Diffusion Policy | train75 | 50k | 64 | 1e-4 | - | 1000 | A100 / RTX 5090 |
 | π0 | train75 | 20k | 32 | 2.5e-5 | `pi0_base` | 1000 | H100 / RTX 5090 |
 | π0.5 | train75 | 20k | 64 | 2.5e-5 | `pi05_base` | 1000 | H100 / RTX 5090 |
 | π0.5 Training-Time RTC | train75 | 20k | 64 | 2.5e-5 | `pi05_base` | 1000 | H100 / RTX 5090 |
@@ -165,7 +166,7 @@ flowchart LR
 
 ![π0 与 π0.5 训练曲线](assets/figures/pi-training-curves.png)
 
-图中展示训练 loss、gradient norm 和 learning rate；逐点数据见 [`results/training_loss.csv`](results/training_loss.csv)。
+图中展示训练 loss、gradient norm 和 learning rate。为避免前期较大的数值把后期变化压扁，纵轴按数据范围截取，loss 使用对数刻度，因此图中不会从 0 起画，也不会把极小的末段波动放大成视觉噪声。完整逐点记录仍按原始日志每 50 个训练步导出，π0 和 π0.5 均覆盖 20k steps，见 [`results/training_loss.csv`](results/training_loss.csv)。
 
 ## 真机评测
 
@@ -193,12 +194,12 @@ flowchart LR
 
 位置泛化只使用 π0.5 Training-Time RTC + DAgger。篮子、相机和起点保持不变，只改变玩偶位置。
 
-| 条件 | DAgger 前 | DAgger 后 | 回合 |
+| 评测条件 | DAgger 前（Before） | DAgger 后（After） | 绝对提升 |
 | --- | ---: | ---: | ---: |
-| 玩偶前移 3 cm | 20% | 70% | 10 |
-| 玩偶侧移 6 cm | 30% | 90% | 10 |
+| 玩偶前移 3 cm | 2/10（20%） | 7/10（70%） | +50 pp |
+| 玩偶侧移 6 cm | 3/10（30%） | 9/10（90%） | +60 pp |
 
-结果支持小范围位置变化下的改进，结论范围止于已测玩偶、位移和场景条件。ACT、Diffusion Policy 和 π0 的位置泛化表现较弱，因此没有继续开展对应的独立位置变化评测；它们的公开结果限于固定点位协议。
+两组结果均来自 10 次人工评分，篮子、相机和起点保持不变，只改变玩偶位置；前后使用同一 π0.5 Training-Time RTC + DAgger 评测流程。`pp` 表示百分点。结果支持小范围位置变化下的改进，结论范围止于已测玩偶、位移和场景条件。ACT、Diffusion Policy 和 π0 的位置泛化表现较弱，因此没有继续开展对应的独立位置变化评测；它们的公开结果限于固定点位协议。
 
 ## DAgger：从失败状态回收训练信号
 
@@ -230,6 +231,8 @@ DAgger 数据聚合围绕真实失败状态展开：
 - 硬件中止、复位失败和未来动作不足的尾段不进入训练窗口。
 
 这个时间轴同时保留模型开始偏移的观测、人工纠正过程和纠正后的剩余动作。训练使用连续有效的人工窗口，完整 episode 用于追溯、行为分析和视频展示。
+
+本轮共保存 35 条完整 episode，人工纠正部分经过筛选后得到 18,004 帧。模型自主阶段的帧仅用于记录、回放和分析，不作为人工监督标签。该流程属于 Human-in-the-Loop（HIL）纠正：模型先执行，人工在失败状态接管并完成任务。暂停断点和尾部不足 50 步的片段不进入训练。
 
 ## 推理链、RTC 与端到端延迟
 
