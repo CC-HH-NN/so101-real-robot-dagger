@@ -15,8 +15,8 @@
 | 实验 | 结果 | 范围 |
 | --- | --- | --- |
 | 固定点位评测 | 47/50，94% | 五种策略，各 10 回合 |
-| 玩偶前移 3 cm | 20% → 70% | π0.5 Training-Time RTC + DAgger，各 10 回合 |
-| 玩偶侧移 6 cm | 30% → 90% | π0.5 Training-Time RTC + DAgger，各 10 回合 |
+| 玩偶前移 | 20% → 70% | π0.5 Training-Time RTC + DAgger，各 10 回合 |
+| 玩偶侧移 | 30% → 90% | π0.5 Training-Time RTC + DAgger，各 10 回合 |
 
 ## 真机 Demo
 
@@ -31,10 +31,10 @@
 <tr>
 <td><img src="assets/demo-gif/pi0p5-attempt-003-top.gif" alt="π0.5 固定位置成功示范" width="260"><br><b>π0.5 · 固定位置</b></td>
 <td><img src="assets/demo-gif/pi0p5_RTC-attempt-003-top.gif" alt="π0.5 RTC 固定位置成功示范" width="260"><br><b>π0.5 RTC · 固定位置</b></td>
-<td><img src="assets/demo-gif/forward3cm-attempt-006-top.gif" alt="玩偶侧移六厘米成功示范" width="260"><br><b>π0.5 RTC + DAgger · 侧移 6 厘米</b></td>
+<td><img src="assets/demo-gif/forward3cm-attempt-006-top.gif" alt="玩偶侧移成功示范" width="260"><br><b>π0.5 RTC + DAgger · 侧移</b></td>
 </tr>
 <tr>
-<td><img src="assets/demo-gif/lateral6cm-attempt-010-top.gif" alt="玩偶前移三厘米成功示范" width="260"><br><b>π0.5 RTC + DAgger · 前移 3 厘米</b></td>
+<td><img src="assets/demo-gif/lateral6cm-attempt-010-top.gif" alt="玩偶前移成功示范" width="260"><br><b>π0.5 RTC + DAgger · 前移</b></td>
 <td><img src="assets/demo-gif/episode-000-top.gif" alt="模型出错后人工纠正的 DAgger 完整轨迹" width="260"><br><b>DAgger · 模型出错后人工纠正</b></td>
 <td><img src="assets/demo-gif/episode-001-top.gif" alt="模型出错后人工纠正的 DAgger 完整轨迹" width="260"><br><b>DAgger · 模型出错后人工纠正</b></td>
 </tr>
@@ -179,8 +179,8 @@ flowchart LR
 
 | 评测条件 | DAgger 前（Before） | DAgger 后（After） | 绝对提升 |
 | --- | ---: | ---: | ---: |
-| 玩偶前移 3 cm | 2/10（20%） | 7/10（70%） | +50 pp |
-| 玩偶侧移 6 cm | 3/10（30%） | 9/10（90%） | +60 pp |
+| 玩偶前移 | 2/10（20%） | 7/10（70%） | +50 pp |
+| 玩偶侧移 | 3/10（30%） | 9/10（90%） | +60 pp |
 
 ACT、Diffusion Policy 和 π0 的位置泛化表现较弱，因此没有继续开展对应的位置变化评测。
 
@@ -256,7 +256,7 @@ Vanilla、Inference-Time RTC 和 Training-Time RTC 都在这条异步链路上�
 ## 当前结论
 
 1. 五种策略在固定点位都具备任务执行能力，ACT、π0 和 π0.5 Training-Time RTC 达到 10/10；Diffusion Policy 和 π0.5 分别为 8/10、9/10。
-2. 固定点位成功率不能代表位置泛化；针对真实失败状态采集并混合 DAgger 数据后，前移 3 cm 和侧移 6 cm 的成功率分别提升到 70% 和 90%。
+2. 固定点位成功率不能代表位置泛化；针对真实失败状态采集并混合 DAgger 数据后，前移和侧移的成功率分别提升到 70% 和 90%。
 3. 真实机器人上的策略效果由模型、数据分布、远程推理、动作接续、相机时效、串口执行和标定合同共同决定，端到端日志是分析这些因素的基础。
 
 ## 第三方组件
