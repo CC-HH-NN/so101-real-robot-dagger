@@ -161,6 +161,12 @@ flowchart LR
 
 π0、π0.5 和 Training-Time RTC 都输出固定长度为 50 步的动作块。离线训练配置使用 10 步采样，真机服务将运行采样设为 5 步，以平衡单次计算量和动作更新频率。Training-Time RTC 在 20 Hz 下保留 25 步执行窗口，并允许最多 20 步的接续延迟，使新动作有机会在旧动作块结束前接入。
 
+### 训练曲线
+
+![π0 与 π0.5 训练曲线](assets/figures/pi-training-curves.png)
+
+图中展示训练 loss、gradient norm 和 learning rate；逐点数据见 [`results/training_loss.csv`](results/training_loss.csv)。
+
 ## 真机评测
 
 ### 评测协议
@@ -246,6 +252,8 @@ Vanilla、Inference-Time RTC 和 Training-Time RTC 都在这条异步链路上�
 
 ### 三层延迟口径
 
+下面三组数来自同一观测输入的离线模型测量：每组预热 3 次、测量 20 次，在 RTX 5090 上使用 5 步采样和 50 步动作块。
+
 | 方案 | median | P95 |
 | --- | ---: | ---: |
 | Vanilla π0.5 | 179.02 ms | 334.06 ms |
@@ -270,3 +278,7 @@ Vanilla、Inference-Time RTC 和 Training-Time RTC 都在这条异步链路上�
 ## 第三方组件
 
 项目使用并参考 LeRobot、ACT、Diffusion Policy、π0/π0.5 及官方 DAgger/RTC 组件。许可与来源见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
+
+## License
+
+本仓库原创代码和文档采用 [MIT License](LICENSE)。第三方组件、模型和源材料遵循各自的许可证与版权声明。
