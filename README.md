@@ -187,7 +187,7 @@ Vanilla π0.5 也采用异步动作块推理。相机线程持续产生观测，
 | π0.5 | train75 | 20k | 64 | 2.5e-5 | `pi05_base` | 1000 | H100 / RTX 5090 |
 | π0.5 Training-Time RTC | train75 | 20k | 64 | 2.5e-5 | `pi05_base` | 1000 | H100 / RTX 5090 |
 
-π0、π0.5 和 Training-Time RTC 预测 50 步动作块。训练配置中的 `num_inference_steps` 为 10，真机远程服务的运行采样为 5 步；Training-Time RTC 使用 20 Hz、`execution_horizon=25`，允许的最大接续延迟为 20 步。
+π0、π0.5 和 Training-Time RTC 都输出固定长度为 50 步的动作块。离线训练配置使用 10 步采样，真机服务将运行采样设为 5 步，以平衡单次计算量和动作更新频率。Training-Time RTC 在 20 Hz 下保留 25 步执行窗口，并允许最多 20 步的接续延迟，使新动作有机会在旧动作块结束前接入。
 
 ## 真机评测
 
