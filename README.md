@@ -93,7 +93,7 @@ flowchart LR
 
 - **Ubuntu 虚拟机采集链路**：承担主从遥操作、双摄话题、录制和初始示范数据采集。它与 ROS 2 控制器和 LeRobot episode 格式衔接紧密，适合稳定生成结构化训练数据；这条路径参与了正式采集和接口验证。
 - **Mac 直接控制链路**：模型闭环需要更低的观测—动作延迟。虚拟机 USB/话题转发链路的额外时延会压缩动作接续余量，因此模型部署、DAgger 现场接管、回位、评分和延迟诊断改由 Mac mini 直接采集相机并持有从臂串口。这条路径也参与正式真机评测。
-- **模型服务链路**：ACT 使用 Mac mini 的 Apple MPS；Diffusion Policy、π0 和 π0.5 使用 RTX 5090 上的项目 gRPC/RPC 服务；π0.5 Training-Time RTC 使用官方 Zenoh remote inference 服务。SSH 用于任务管理、端口转发和文件校验。
+- **模型服务链路**：ACT 使用 Mac mini 的 Apple MPS；Diffusion Policy、π0 和 π0.5 使用 RTX 5090 上的项目 gRPC/RPC 服务；π0.5 Training-Time RTC 使用官方 Zenoh remote inference 服务。SSH 只负责任务管理、端口转发和文件校验，不参与动作控制。
 
 两条链路共同构成项目闭环：虚拟机解决示范采集和统一数据接口，Mac 解决低延迟执行和现场纠正。它们承担不同阶段，结果和日志按路径分别记录。
 
@@ -114,6 +114,34 @@ flowchart LR
 - **远程环境**：Python 3.12.15、PyTorch 2.7.1+cu128、TorchVision 0.22.1+cu128、LeRobot 0.6.2、Eclipse Zenoh 1.10.1、Transformers 5.22.1、SentencePiece 0.2.2。
 
 对于远程策略，Mac mini 发送时间对齐并 JPEG 编码后的双摄观测与关节状态；服务器完成模型前向和动作块生成；结果返回后由本地控制层执行并记录接纳时间、预测年龄和反馈状态。ACT 的模型前向在 Mac mini 的 Apple MPS 上完成。
+
+### 推理执行链与三种 RTC 方案
+
+Vanilla π0.5 也采用异步动作块推理。相机线程持续产生观测，策略服务在另一线程或另一台机器上计算，Mac 本地控制线程从动作队列中按 20 Hz 取出目标并下发；区别在于 Vanilla 不使用 RTC 前缀来改写新旧动作块的衔接。
+
+远程 π0.5 的普通链路可以概括为：
+
+```text
+相机采集线程
+    → SendObservations
+    → RTX 5090 上的 LeRobot 策略服务
+    → GetActions
+    → Mac 本地动作队列
+    → 串口控制线程
+    → SO-101 从臂
+```
+
+这里的 RPC（Remote Procedure Call）是通信方式：Mac 调用服务器上的“发送观测”和“返回动作”两个远程函数，服务器运行策略并返回一段动作。普通 π0.5 和 Inference-Time RTC 使用项目内的 gRPC/RPC 服务；Training-Time RTC 使用官方 `RemoteInferenceEngine` 和 Zenoh 链路。
+
+三种方案在动作接续上的区别如下：
+
+| 方案 | 动作接续方式 | 是否需要专用训练 |
+| --- | --- | --- |
+| Vanilla | 异步预测新的 50 步动作块，直接放入本地队列，不使用 RTC 前缀 | 否 |
+| Inference-Time RTC | 推理时用正在执行的旧动作块作为前缀，引导新动作块与旧块接上 | 否；增加推理侧计算 |
+| Training-Time RTC | 训练阶段让模型学习延迟条件下的动作接续，推理时使用训练好的前缀机制 | 是；需要 Training-Time RTC checkpoint |
+
+本项目的模型和训练代码基于 LeRobot Pi0/Pi0.5 与 PyTorch。普通推理和 Inference-Time RTC 走项目 gRPC/RPC 适配层，Training-Time RTC 走官方 Zenoh 远程推理适配层；Ubuntu 虚拟机中的 ROS 2 只承担初始主从采集。运行时间较长主要来自当前 LeRobot 服务的实际实现和链路开销，不能简单归结为“PyTorch 一定比 JAX 慢”。
 
 ## 数据采集与清洗
 
@@ -227,40 +255,50 @@ DAgger 数据聚合围绕真实失败状态展开：
 
 ## RTC 与端到端延迟
 
-π0.5 Training-Time RTC 使用 20 Hz、50 步动作块和 `execution_horizon=25`，允许的最大接续延迟为 20 步。
+本项目把延迟拆成三个层次：模型本身计算一段动作需要多久；观测从 Mac 发出到动作返回需要多久；动作返回后，队列、串口和反馈是否还能保持连续。三类数字不能混成一个“推理速度”。
 
-### 三类公开证据
+### 纯模型计算时间
+
+下面的离线测量只调用 `predict_action_chunk()`。三组使用同一份 `observation.npz`、同一张 RTX 5090（GPU 5）、50 步动作块和 5 步采样；每组先预热 3 次，再测 20 次。计时包含 GPU 同步后的策略调用，不含相机、JPEG、网络、RPC、服务排队、动作队列和机械臂。
+
+| 方案 | 模型调用 median | P95 |
+| --- | ---: | ---: |
+| Vanilla π0.5 | 179.02 ms | 334.06 ms |
+| Inference-Time RTC | 250.36 ms | 413.11 ms |
+| Training-Time RTC | 164.66 ms | 195.13 ms |
+
+这组数据只描述当前实现的单次计算开销。Inference-Time RTC 在这次测量中比 Vanilla 多一次前缀引导计算；Training-Time RTC 的中位数较低，但端到端控制还要结合完整链路。两组测量使用的 LeRobot 小版本不同（Vanilla/Inference-Time RTC 为 0.6.1，Training-Time RTC 为 0.6.2），因此这里把它作为工程基线，解读时保留版本差异。测量记录和计时边界见 [`results/pure_model_timing.md`](results/pure_model_timing.md)。
+
+### 真实运行中的三类证据
 
 ![Live timing probe comparison](assets/figures/rtc-runtime-comparison.png)
 
-同一类被动真机时延探针下，π0、Diffusion Policy 和 π0.5 Training-Time RTC 分别完成独立短时运行。图中给出各策略预测年龄的 median / p95，直观看到不同推理链路在真实运行中的时延差异。
+这张图统计的是观测到动作返回之间的预测年龄 median / p95。它包含模型计算、编码、网络和服务排队，回答的是“真实控制线程拿到的动作有多新”；纯模型速度对应上一节的离线测量。
 
 ![RTC latency distribution](assets/figures/rtc-latency-distribution.png)
 
-三次连续 π0.5 RTC step-1000 真机运行记录显示，往返时间中位数约 240 ms，源帧年龄中位数约 355 ms；长尾样本对应启动、服务负载或相机时效波动。原始分布见 [`results/rtc_latency_distribution.csv`](results/rtc_latency_distribution.csv)。
+三次连续 π0.5 RTC step-1000 真机运行中，请求往返时间中位数约 240 ms，源帧年龄中位数约 355 ms。分布的长尾对应冷启动、服务负载和相机时效波动；它可以帮助定位队列为什么会被耗尽，但不能单独证明某个模型更强。原始数据见 [`results/rtc_latency_distribution.csv`](results/rtc_latency_distribution.csv)。
 
 ![RTC action trajectory](assets/figures/rtc-action-trajectory.png)
 
-动作轨迹图来自同一组已记录观测的离线回放，用于观察 20k 基线与 DAgger +1k checkpoint 的动作差异；回放没有向机械臂发送命令。原始轨迹见 [`results/rtc_action_trajectory.csv`](results/rtc_action_trajectory.csv)。
+这张图来自同一组观测的离线回放，用来比较 20k 基线和 DAgger +1k checkpoint 在相同输入下的动作轨迹。回放阶段没有向机械臂发送命令，因此它反映策略输出差异；实际机械臂平滑度需要结合反馈记录。原始轨迹见 [`results/rtc_action_trajectory.csv`](results/rtc_action_trajectory.csv)。
+
+### 固定点位的 RTC 对照
+
+下面是两组各 10 回合的固定点位真机记录：普通 π0.5 使用 Inference-Time RTC，另一组使用 Training-Time RTC。
+
+| 条件 | 成功率 | 预测/源帧年龄 median | 预测/源帧年龄 P95 | 请求往返 median | 服务端计算 median | 相邻预测命令差 P95 | 离散 jerk P95 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| π0.5 Inference-Time RTC | 9/10 | 644.7 ms | 942.8 ms | — | — | 0.038 rad | 219.8 rad/s³ |
+| π0.5 Training-Time RTC | 10/10 | 514.2 ms | 637.1 ms | 397.0 ms | 173.7 ms | 0.032 rad | 182.4 rad/s³ |
+
+Training-Time RTC 这组记录中，171 个预测有 149 个被接收，22 个被调度逻辑拒绝；最低动作队列余量的中位数为 0.93 秒，没有出现队列耗尽。当前小样本中，它的帧年龄、相邻预测命令差和离散 jerk P95 都较低，说明动作接续更平稳的迹象；其中“相邻预测命令差”和“离散 jerk”是日志指标，不等同于机械臂真实关节 jerk，也不足以单独证明 RTC 带来因果提升。
 
 ### 已定位的运行现象
 
 - 一次预检测往返约 1.07 s，按 20 Hz 需要约 22 步接续，超过 20 步上限；官方拒绝该接续后，旧动作块播放完，队列耗尽；
 - 一次运行中 540/540 条命令通过、18/18 个 RTC 结果接纳、串口无故障，但控制线程看到的相机帧年龄超过 0.2 s，运行因此停止；
 - 队列耗尽、相机过期、模型响应失败和舵机故障在日志中分别记录，技术中止与策略任务失败分开统计。
-
-这些记录覆盖了普通 π0.5 的 Inference-Time RTC 和 π0.5 Training-Time RTC，结合延迟、队列和动作轨迹指标，形成了本项目的 RTC 工程对照。
-
-### 现有固定点位的两组 RTC 对照
-
-为了进一步量化动作接续，我们从两组各 10 回合的固定点位真机记录中提取了逐回合指标：普通 π0.5 使用 Inference-Time RTC，另一组使用 Training-Time RTC。
-
-| 条件 | 成功率 | 预测/源帧年龄 median | 预测/源帧年龄 P95 | 请求往返 median | 服务端计算 median | 动作块边界跳变 P95 | jerk P95 |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| π0.5 Inference-Time RTC | 9/10 | 644.7 ms | 942.8 ms | — | — | 0.038 rad | 219.8 rad/s³ |
-| π0.5 Training-Time RTC | 10/10 | 514.2 ms | 637.1 ms | 397.0 ms | 173.7 ms | 0.032 rad | 182.4 rad/s³ |
-
-Training-Time RTC 这组记录中，171 个预测有 149 个被接收，22 个被调度逻辑拒绝；最低动作队列余量的中位数为 0.93 秒，没有出现队列耗尽。结合更低的帧年龄、边界跳变和 jerk，这组结果显示 Training-Time RTC 在当前真机运行中的动作接续更平稳。
 
 逐回合数据见 [`results/rtc_episode_metrics.csv`](results/rtc_episode_metrics.csv)，汇总见 [`results/rtc_comparison_summary.csv`](results/rtc_comparison_summary.csv)，提取脚本见 [`src/analyze_rtc_logs.py`](src/analyze_rtc_logs.py)。
 

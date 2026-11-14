@@ -12,6 +12,7 @@
 | `rtc_latency_distribution.csv` + `assets/figures/rtc-latency-distribution.png` | 三次连续 π0.5 Training-Time RTC step-1000 运行的官方结果分布。 | 真实运行时延分布；不含任务成功率结论。 |
 | `rtc_action_trajectory.csv` + `assets/figures/rtc-action-trajectory.png` | 同一记录观测序列上的 20k 与 DAgger +1k 离线动作回放。 | 行为诊断；未向机械臂发送动作。 |
 | `rtc_episode_metrics.csv` + `rtc_comparison_summary.csv` | 从普通 π0.5 Inference-Time RTC 与 π0.5 Training-Time RTC 各 10 回合固定点位真机日志中提取帧年龄、请求往返、服务计算、动作块接收、队列余量和动作连续性指标。 | 逐回合和条件汇总公开，用于项目内 RTC 工程对照。 |
+| `pure_model_timing.md` | 同一观测、RTX 5090 GPU 5、50 步动作块和 5 步采样下，对 Vanilla、Inference-Time RTC 和 Training-Time RTC 的离线策略调用计时。 | 纯模型计算基线公开；不包含相机、网络、队列和机械臂执行。 |
 
 ## 结果解释
 
